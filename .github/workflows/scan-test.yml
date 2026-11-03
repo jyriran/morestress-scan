@@ -1,0 +1,54 @@
+name: Scan test (fake camera)
+
+# Plays the real shirt video into headless Chrome as a fake camera, opens the
+# scan page, and checks that the print is recognised and the meter appears.
+# Screenshots are uploaded as a workflow artifact.
+
+on:
+  workflow_run:
+    workflows: ["Build scan targets and publish"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  test:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Get the published targets.mind
+        run: |
+          set -e
+          PAGES_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${GITHUB_REPOSITORY#*/}"
+          echo "PAGES_URL=$PAGES_URL" >> "$GITHUB_ENV"
+          curl -fsSL "$PAGES_URL/designs/targets.mind" -o designs/targets.mind
+          curl -fsSL "$PAGES_URL/designs/targets.json" -o designs/targets.json
+          ls -la designs
+
+      - name: Make the fake camera feed
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          ffmpeg -loglevel error -y -i tests/shirt-scan.mp4 -vf "scale=540:960,fps=30" -pix_fmt yuv420p -t 8 "$RUNNER_TEMP/cam.y4m"
+          ls -la "$RUNNER_TEMP/cam.y4m"
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.47.2
+          npx playwright install --with-deps chromium
+
+      - name: Run the scan
+        env:
+          CAM: ${{ runner.temp }}/cam.y4m
+        run: node tests/scan-test.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scan-test
+          path: test-output/

@@ -1,0 +1,66 @@
+name: Build scan targets and publish
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install system libraries for canvas
+        run: sudo apt-get update && sudo apt-get install -y build-essential libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev
+
+      - name: Get the image-tracking compiler (mind-ar 1.2.5)
+        run: |
+          git clone --depth 1 --branch v1.2.5 https://github.com/hiukim/mind-ar-js.git "$RUNNER_TEMP/mind-ar-js"
+          cd "$RUNNER_TEMP/mind-ar-js"
+          npm install --no-audit --no-fund --ignore-scripts=false
+
+      - name: Compile designs into targets.mind
+        env:
+          MINDAR_DIR: ${{ runner.temp }}/mind-ar-js
+        run: node tools/compile-targets.mjs .
+
+      - name: Assemble site
+        run: |
+          mkdir -p _site
+          cp index.html _site/
+          cp -r designs _site/
+          [ -f CNAME ] && cp CNAME _site/ || true
+          touch _site/.nojekyll
+          ls -la _site _site/designs
+
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
