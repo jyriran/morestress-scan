@@ -59,7 +59,16 @@ try {
     await page.screenshot({ path: path.join(outDir, `${String(i + 1).padStart(2, "0")}-scan.png`) });
     if (errorVisible) { result.error = await page.textContent("#error"); break; }
     if (!result.locked && /LOCKED/.test(status)) { result.locked = true; result.lockedAfterMs = Date.now() - t0; }
-    if (result.locked && verdict && !/CALIBRATING|SEARCHING|LOST/.test(verdict)) { result.verdictShown = true; await page.waitForTimeout(1500); await page.screenshot({ path: path.join(outDir, "zz-verdict.png") }); break; }
+    if (result.locked && verdict && !/CALIBRATING|SEARCHING|LOST/.test(verdict)) {
+      result.verdictShown = true;
+      for (const ms of [800, 1500, 2500]) { await page.waitForTimeout(ms); await page.screenshot({ path: path.join(outDir, `zz-verdict-${ms}.png`) }); }
+      // reroll by tapping the camera view
+      await page.click("#ar", { position: { x: 195, y: 300 } });
+      await page.waitForTimeout(3500);
+      await page.screenshot({ path: path.join(outDir, "zz-reroll.png") });
+      result.afterReroll = await page.textContent("#scanVerdict").catch(() => "?");
+      break;
+    }
   }
 } catch (e) {
   result.exception = String(e && e.stack || e);
