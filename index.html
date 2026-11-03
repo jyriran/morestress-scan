@@ -404,7 +404,7 @@ async function start(){
     const { MindARThree } = await import("mindar-image-three");
     const src = await getTargets();
     setLoad(92, "ASKING FOR CAMERA…");
-    mindar = new MindARThree({ container: ar, imageTargetSrc: src, maxTrack: 1, uiLoading: "no", uiScanning: "no", uiError: "no", filterMinCF: 0.0001, filterBeta: 0.001 });
+    mindar = new MindARThree({ container: ar, imageTargetSrc: src, maxTrack: 1, uiLoading: "no", uiScanning: "no", uiError: "no", filterMinCF: 0.001, filterBeta: 10, missTolerance: 8, warmupTolerance: 3 });
     const { renderer, scene, camera } = mindar;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     overlays = []; anchors = [];
