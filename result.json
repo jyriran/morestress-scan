@@ -1,0 +1,24 @@
+{
+  "locked": true,
+  "lockedAfterMs": 3155,
+  "verdictShown": true,
+  "statusTimeline": [
+    {
+      "s": 2,
+      "status": "LOCKED: ACADEMIC SYSTEM STATUS",
+      "verdict": "CALIBRATING…Reading your academic situation.",
+      "loadingVisible": false,
+      "loadText": "ASKING FOR CAMERA…",
+      "errorVisible": false
+    },
+    {
+      "s": 6,
+      "status": "LOCKED: ACADEMIC SYSTEM STATUS",
+      "verdict": "EXTENSION: MANIFESTINGDrafting the email. Rewriting the email. Not sending the email.",
+      "loadingVisible": false,
+      "loadText": "ASKING FOR CAMERA…",
+      "errorVisible": false
+    }
+  ],
+  "afterReroll": "THESIS: AN IDEA, LOOSELYYour advisor said \"interesting.\" Not in a good way."
+}
