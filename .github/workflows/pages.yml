@@ -1,4 +1,4 @@
-name: Build scan targets and publish
+name: Build, test and publish the scan
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         run: |
           git clone --depth 1 --branch v1.2.5 https://github.com/hiukim/mind-ar-js.git "$RUNNER_TEMP/mind-ar-js"
           cd "$RUNNER_TEMP/mind-ar-js"
-          npm install --no-audit --no-fund --ignore-scripts=false
+          npm install --no-audit --no-fund
 
       - name: Compile designs into targets.mind
         env:
@@ -47,13 +47,55 @@ jobs:
           touch _site/.nojekyll
           ls -la _site _site/designs
 
-      - uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: _site
+
+  # Plays the real shirt video into headless Chrome as the camera and checks
+  # the page locks onto the print. Screenshots land in the "scan-test" artifact.
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: _site
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Make the fake camera feed
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          ffmpeg -loglevel error -y -stream_loop 2 -i tests/shirt-scan.mp4 -vf "scale=540:960,fps=30" -pix_fmt yuv420p -t 20 "$RUNNER_TEMP/cam.y4m"
+          ls -la "$RUNNER_TEMP/cam.y4m"
+
+      - name: Install Playwright
+        run: |
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund playwright@1.47.2
+          npx playwright install --with-deps chromium
+
+      - name: Run the scan
+        env:
+          CAM: ${{ runner.temp }}/cam.y4m
+          SITE: _site
+        run: node tests/scan-test.mjs
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: scan-test
+          path: test-output/
 
   deploy:
     needs: build

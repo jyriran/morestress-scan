@@ -5,8 +5,8 @@ import { readFile, mkdir, writeFile, stat } from "fs/promises";
 import path from "path";
 import { chromium } from "playwright";
 
-const root = path.resolve(".");
-const outDir = path.join(root, "test-output");
+const root = path.resolve(process.env.SITE || ".");
+const outDir = path.resolve("test-output");
 await mkdir(outDir, { recursive: true });
 
 const types = { ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".jpg": "image/jpeg", ".png": "image/png", ".json": "application/json", ".mind": "application/octet-stream" };
@@ -29,6 +29,8 @@ const browser = await chromium.launch({
     "--use-fake-device-for-media-stream",
     `--use-file-for-fake-video-capture=${process.env.CAM}`,
     "--enable-unsafe-swiftshader",
+    "--use-angle=swiftshader",
+    "--enable-webgl",
     "--ignore-gpu-blocklist",
   ],
 });

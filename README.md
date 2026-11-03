@@ -22,9 +22,9 @@ Live: https://jyriran.github.io/morestress-scan/ (later `https://scan.morestress
    `designs/<new-id>/target.jpg` (about 1000px wide), plus a 300px `thumb.jpg`.
 2. Add an entry to `MS_DESIGNS` in `designs/designs.js`. Set `width`/`height`
    to the image size and `overlay.box` to the area the meter should cover.
-3. Push to `main`. The **Build scan targets and publish** workflow compiles
-   `targets.mind` and redeploys; **Scan test** then checks recognition with the
-   video in `tests/`.
+3. Push to `main`. The **Build, test and publish the scan** workflow compiles
+   `targets.mind`, runs a fake-camera scan with the video in `tests/` (screenshots
+   in the `scan-test` artifact) and redeploys the site.
 
 Good targets have lots of sharp, high-contrast detail (text, corners, bars) and
 are not symmetrical. Plain areas, gradients and repeating patterns track badly.
